@@ -4,7 +4,7 @@ Step 1:
 
 Inserting the bananas credentials in dblogin.py
 
-Running the ExtractCsv.py file to obtain the .csv files contaninig the eta and V parameters for the datasets dersired. It is possible to select the Filter radius, out of which excluding the sources. 
+Running the ExtractCsv.py file, using the same virtual environment used for running TraP, to obtain the .csv files contaninig the eta and V parameters for the datasets dersired. It is possible to select the Filter radius, out of which excluding the sources. 
 
 Step 2: 
 
