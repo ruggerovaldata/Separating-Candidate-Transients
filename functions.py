@@ -116,13 +116,13 @@ def Probability(data, mean, sigma):
 
     return prob*100
 
-def GetOutput(idx,eta,V,dists_eta,dists_V,percentage,title):
-    output = np.vstack([idx[2],eta[0],V[0],dists_eta,dists_V,percentage])
+def GetOutput(idx,ra, dec, eta,V,dists_eta,dists_V,percentage, title):
+    output = np.vstack([idx[2],ra, dec, eta[0],V[0],dists_eta,dists_V,percentage])
     output = output.T
 
     sort = np.argsort(output[:,-1])
     output = output[sort]
 
     file = open(title+'.txt','w')
-    file.write(tabulate(output,headers=['Runcat','Eta','V','Dists eta','Dists V','Percentage'],floatfmt=('.0f','.3f','.3f','.3f','.3f','.10f')))
+    file.write(tabulate(output,headers=['Runcat','RA','DEC','Eta','V','Dists eta','Dists V','Percentage'],floatfmt=('.0f','.4f','.4f','.3f','.3f','.3f','.3f','.10f')))
     file.close()
