@@ -39,7 +39,7 @@ VarParams = dbtools.GetVarParams(session,dataset_id)   # Get the running catalog
 
 plotdata = [[VarParams[i].Runningcatalog.id, VarParams[i].Varmetric.eta_int, VarParams[i].Varmetric.v_int, VarParams[i].Varmetric.lightcurve_max, 
             VarParams[i].Varmetric.lightcurve_median, (VarParams[i].Varmetric.band.freq_central/1e6), VarParams[i].Runningcatalog.datapoints, VarParams[i].Varmetric.newsource, 
-            VarParams[i].Runningcatalog.wm_ra, VarParams[i].RunnicaVarParams[i].Runningcatalog.wm_decl] for i in range(len(VarParams))]  #if VarParams[i].Runningcatalog.id not in matchSrcs]
+            VarParams[i].Runningcatalog.wm_ra, VarParams[i].Runningcatalog.wm_decl] for i in range(len(VarParams))]  #if VarParams[i].Runningcatalog.id not in matchSrcs]
 plotdata = pd.DataFrame(data=plotdata,columns=['runcat','eta','V','maxFlx','avgFlx','freq','dpts','newSrc','ra','dec'])
 plotdata = plotdata.fillna('N')
 
