@@ -70,7 +70,7 @@ def BothOverLine(m_eta,q_eta,m_V,q_V,eta,V,flux,idx,ra,dec):
     V_best = np.array(V_best)
     idx_best = np.array(idx_best)
     ra_best = np.array(ra_best)
-    dec_best = np.arrya(dec_best)
+    dec_best = np.array(dec_best)
 
     return eta_best.T, flux_best_eta.T, V_best.T, idx_best.T, ra_best.T, dec_best.T
 

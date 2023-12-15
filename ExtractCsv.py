@@ -44,5 +44,5 @@ plotdata = pd.DataFrame(data=plotdata,columns=['runcat','eta','V','maxFlx','avgF
 plotdata = plotdata.fillna('N')
 
 # Save the data for plotting
-plotdata.to_csv(outputname, index=False)
+plotdata.to_csv(outputname+'.csv', index=False)
 
