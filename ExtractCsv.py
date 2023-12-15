@@ -43,6 +43,8 @@ plotdata = [[VarParams[i].Runningcatalog.id, VarParams[i].Varmetric.eta_int, Var
 plotdata = pd.DataFrame(data=plotdata,columns=['runcat','eta','V','maxFlx','avgFlx','freq','dpts','newSrc','ra','dec'])
 plotdata = plotdata.fillna('N')
 
+plotdata = plotdata.loc[(plotdata['eta'] > 0) & (plotdata['V'] > 0) & (plotdata['dpts']>1) & (plotdata['newSrc']=='N')]
+
 # Save the data for plotting
 plotdata.to_csv(outputname+'.csv', index=False)
 
