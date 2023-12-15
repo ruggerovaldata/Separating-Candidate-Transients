@@ -12,7 +12,7 @@ import functions as func
 import scipy.optimize as spopt
 import scipy.stats as spstat
 
-plt.rcParams['text.usetex']=True
+#plt.rcParams['text.usetex']=True
 
 names = ['freq0','freq1','freq2','freq3'] #Insert here the name of the files .csv files that need to be analysed
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
