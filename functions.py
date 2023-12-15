@@ -50,23 +50,29 @@ def OverLine(m,q,eta,flux):
 
     return eta_best.T, flux_best_eta.T
 
-def BothOverLine(m_eta,q_eta,m_V,q_V,eta,V,flux,idx):
+def BothOverLine(m_eta,q_eta,m_V,q_V,eta,V,flux,idx,ra,dec):
     eta_best=[]
     flux_best_eta=[]
     V_best=[]
     idx_best=[]
+    ra_best = []
+    dec_best = []
     for i,val in enumerate(eta[0]):
         if (val - (m_eta*flux[0,i]+q_eta)>=0) and (V[0,i]-(m_V*flux[0,i]+q_V)>=0):
             flux_best_eta.append(flux[:,i])
             eta_best.append(eta[:,i])
             V_best.append(V[:,i])
             idx_best.append(idx[:,i])
+            ra_best.append(ra[i])
+            dec_best.append(dec[i])
     eta_best = np.array(eta_best)
     flux_best_eta = np.array(flux_best_eta)
     V_best = np.array(V_best)
     idx_best = np.array(idx_best)
+    ra_best = np.array(ra_best)
+    dec_best = np.arrya(dec_best)
 
-    return eta_best.T, flux_best_eta.T, V_best.T, idx_best.T
+    return eta_best.T, flux_best_eta.T, V_best.T, idx_best.T, ra_best.T, dec_best.T
 
 def Accuracy(pred_out,true_out):
     aset = set([tuple(x) for x in pred_out])

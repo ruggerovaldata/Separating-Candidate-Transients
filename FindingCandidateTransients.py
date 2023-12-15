@@ -31,6 +31,9 @@ freq.append(data['freq'][2])
 idx = np.array((np.log10(data['eta']),np.log10(data['V']),data['runcat'],np.log10(data['maxFlx']))) #Connecting the data to their running catalog indexes
 eta = np.array((data['eta'],data['freq'])) #Collecting eta parameter of the data connected to the frequency
 
+ra = np.array(data['ra'])#Getting the positions of the sources
+dec = np.array(data['dec'])
+
 
 V = np.array((data['V'],data['freq'])) #Same as for eta
 
@@ -104,7 +107,7 @@ likelihood = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_m
 
 outliers_prob = func.Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
 
-func.GetOutput(idx,eta,V,dists_eta,dists_V,outliers_prob,'Wholedatasetoutput') #Obtaining the output file
+func.GetOutput(idx,ra,dec,eta,V,dists_eta,dists_V, outliers_prob,'Wholedatasetoutput') #Obtaining the output file
 
 figure, axes = myplt.MyCorner(dists_eta,dists_V,likelihood,'CornerPlot') #Printing the corner plot both with the likelihood and without the likelihood
 
@@ -178,7 +181,7 @@ plt.savefig('OutInEtavsV')
 
 #Finding point over the line and repeating the analysis 
 
-eta_best,flux_best,V_best, idx_best = func.BothOverLine(m_eta,q_eta,m_V,q_V,eta_log,V_log,flux_log,idx)
+eta_best,flux_best,V_best, idx_best, ra_best, dec_best = func.BothOverLine(m_eta,q_eta,m_V,q_V,eta_log,V_log,flux_log,idx, ra, dec)
 
 fig,ax1,ax2=myplt.EtaVscatter(eta_best,V_best,flux_best,freq,'EtavsVUnBest')
 ax1.set_title(r'Linear Fit Stable and unstable sources',fontsize=20)
@@ -208,7 +211,7 @@ cov_matrix = np.cov(dists_eta_best,dists_V_best)
 likelihood_best = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_matrix)
 outliers_prob = func.Probability(data_graph,mu,cov_matrix)
 
-func.GetOutput(idx_best,eta_best,V_best,dists_eta_best,dists_V_best,outliers_prob,'PositiveDistancesoutput')
+func.GetOutput(idx_best, ra_best, dec_best, eta_best,V_best,dists_eta_best,dists_V_best,outliers_prob,'PositiveDistancesoutput')
 
 figure, axes = myplt.MyCorner(dists_eta_best,dists_V_best,likelihood_best,'CornerPlotBest')
 
