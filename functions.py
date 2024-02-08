@@ -97,7 +97,7 @@ def FindOutliersIdx(outliers,eta_best,V_best,idx,y_eta_best,y_V_best):
     temp=idx.T
     for val in temp:
         if val[0] in outliers_found[0] and val[1] in outliers_found[1]:
-            outliers_idx.append(val[2])
+            outliers_idx.append(int(val[2]))
     
     print('Indeces of the possible outliers', outliers_idx)
     
