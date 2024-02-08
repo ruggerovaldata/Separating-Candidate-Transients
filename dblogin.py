@@ -1,5 +1,5 @@
 engine = 'postgresql'
-host = 'vlo.science.uva.nl'
+host = ''
 port = 5432
 user = ''
 password = ''
