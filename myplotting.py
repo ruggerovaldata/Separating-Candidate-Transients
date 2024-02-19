@@ -4,23 +4,20 @@ import pylab
 pylab.rcParams['legend.loc'] = 'best'
 
 
-def EtaVscatter(Eta,V,Flux,freq,name):
+#def EtaVscatter(Eta,V,Flux,freq,name):
+def EtaVscatter(data,freq,name):
+
+    fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
+
     eta_graph=[]
     flux_graph=[]
-    V_graph = []
-
-    for val in freq: 
-        temp_flux=[]
-        temp_eta=[]
-        temp_V =[]
-        for i,f in enumerate(Flux[1,:]):
-            if val == f:
-                temp_eta.append(Eta[0,i])
-                temp_flux.append(Flux[0,i])
-                temp_V.append(V[0,i])
-        eta_graph.append(temp_eta)
-        flux_graph.append(temp_flux)
-        V_graph.append(temp_V)
+    V_graph=[]
+    
+    for i,val in enumerate(freq):
+        tmp = data.loc[data['freq'] == val]
+        eta_graph.append(tmp.logEta)
+        flux_graph.append(tmp.logFlux)
+        V_graph.append(tmp.logV)
 
     eta_graph = np.array(eta_graph,dtype=list)
     flux_graph = np.array(flux_graph,dtype=list)
@@ -40,9 +37,6 @@ def EtaVscatter(Eta,V,Flux,freq,name):
     ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
     ax1.tick_params(labelsize=15)
     ax2.tick_params(labelsize=15)
-    #ax1.set_xticklabels(, fontsize=20)
-    #ax1.set_yticks(yvals)
-    #ax1.set_yticklabels(ytxts, fontsize=20)
     plt.savefig( name +'.png')
     return fig, ax1,ax2
         
