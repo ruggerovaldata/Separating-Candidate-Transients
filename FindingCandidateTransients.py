@@ -1,6 +1,4 @@
-#from signal import Sigmasks
 import matplotlib
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pylab
@@ -12,9 +10,8 @@ import functions as func
 import scipy.optimize as spopt
 import scipy.stats as spstat
 
-#plt.rcParams['text.usetex']=True
 
-names = ['freq0','freq1','freq2','freq3'] #Insert here the name of the files .csv files that need to be analysed
+names = ['GRBdata'] #Insert here the name of the .csv files that need to be analysed
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
 
 
@@ -30,21 +27,17 @@ freq.append(data['freq'][2])
 
 idx = np.array((np.log10(data['eta']),np.log10(data['V']),data['runcat'],np.log10(data['maxFlx']))) #Connecting the data to their running catalog indexes
 eta = np.array((data['eta'],data['freq'])) #Collecting eta parameter of the data connected to the frequency
+V = np.array((data['V'],data['freq'])) #Same as for eta
 
 ra = np.array(data['ra'])#Getting the positions of the sources
 dec = np.array(data['dec'])
-
-
-V = np.array((data['V'],data['freq'])) #Same as for eta
 
 max_flux = np.array((data['maxFlx'],data['freq'])) #Same as V and eta
 i=1
 
 print('Sources in the file number ', i, ' : ', eta.shape[-1])
-
 # Loading the rest of the files
 i=2
-
 for name in names: 
     temp_eta, temp_V, temp_flux, temp_idx = func.Data_Load(name+'.csv')
     print('Sources in the file number ', i, ' : ', temp_eta.shape[-1])
@@ -179,7 +172,7 @@ axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
 plt.savefig('OutInEtavsV')
 
-#Finding point over the line and repeating the analysis 
+#Finding points over the line and repeating the analysis 
 
 eta_best,flux_best,V_best, idx_best, ra_best, dec_best = func.BothOverLine(m_eta,q_eta,m_V,q_V,eta_log,V_log,flux_log,idx, ra, dec)
 
@@ -190,30 +183,6 @@ ax2.plot(flux_log[0],y_V,label='Best fit',color='gray',ls='--')
 ax1.legend(fontsize=15,markerscale=1.5)
 ax2.legend(fontsize=15,markerscale=1.5)
 plt.savefig('EtavsVUnBest')
-
-#Repeating the multivariate calculation 
-
-y_eta_best = func.LinearFit(flux_best[0],m_eta,q_eta)
-y_V_best = func.LinearFit(flux_best[0],m_V,q_V)
-
-dists_eta_best = func.Params_distance(eta_best[0],y_eta_best)
-dists_V_best = func.Params_distance(V_best[0],y_V_best)
-
-ndim = 2
-data_graph = np.vstack([dists_eta_best,dists_V_best])
-data_graph = data_graph.T
-
-mean_deta = np.mean(dists_eta_best)
-mean_dV = np.mean(dists_V_best)
-mu = [mean_deta,mean_dV]
-
-cov_matrix = np.cov(dists_eta_best,dists_V_best)
-likelihood_best = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_matrix)
-outliers_prob = func.Probability(data_graph,mu,cov_matrix)
-
-func.GetOutput(idx_best, ra_best, dec_best, eta_best,V_best,dists_eta_best,dists_V_best,outliers_prob,'PositiveDistancesoutput')
-
-figure, axes = myplt.MyCorner(dists_eta_best,dists_V_best,likelihood_best,'CornerPlotBest')
 
 inliers_best = []
 outliers_best = []
@@ -227,60 +196,61 @@ for x in data_graph:
 inliers_best = np.array(inliers_best)
 outliers_best = np.array(outliers_best)
 
+print('Number of outliers : ', len(outliers_best))
 
-print('\n DATASET ABOVE THE LINE: \n')
+if outliers_best.shape[-1] == 0:
+    print('No candidate variable sources found.')
+    exit
+else:
+    outliers_idx=func.FindOutliersIdx(outliers_best,eta_log, V_log, idx, y_eta, y_V)
+    print(outliers_idx)
 
-print('Number of sources above the line : ', eta_best.shape[-1])
+    outliers_eta=[]
+    outliers_V=[]
+    inliers_eta=[]
+    inliers_V=[]
+    flux_outliers=[]
+    flux_inliers=[]
+    
+    for i,val in enumerate(idx_best[-2]):
+        if val in outliers_idx:
+            outliers_eta.append(idx_best[0][i])
+            outliers_V.append(idx_best[1][i])
+            flux_outliers.append(idx_best[-1][i])
+        else:
+            inliers_eta.append(idx_best[0][i])
+            inliers_V.append(idx_best[1][i])
+            flux_inliers.append(idx_best[-1][i])
 
-outliers_idx=func.FindOutliersIdx(outliers_best,eta_best,V_best,idx,y_eta_best,y_V_best)
+    outliers_EtavsV = np.array((outliers_eta, outliers_V))
+    inliers_EtavsV= np.array((inliers_eta,inliers_V))
 
-outliers_eta=[]
-outliers_V=[]
-inliers_eta=[]
-inliers_V=[]
-flux_outliers=[]
-flux_inliers=[]
+    flux_outliers=np.array(flux_outliers)
+    flux_inlliers=np.array(flux_inliers)
 
-for i,val in enumerate(idx_best[-2]):
-    if val in outliers_idx:
-        outliers_eta.append(idx_best[0][i])
-        outliers_V.append(idx_best[1][i])
-        flux_outliers.append(idx_best[-1][i])
-    else:
-        inliers_eta.append(idx_best[0][i])
-        inliers_V.append(idx_best[1][i])
-        flux_inliers.append(idx_best[-1][i])
+    outliers_EtavsV = outliers_EtavsV.T
+    inliers_EtavsV =inliers_EtavsV.T
 
-outliers_EtavsV = np.array((outliers_eta, outliers_V))
-inliers_EtavsV= np.array((inliers_eta,inliers_V))
+    figure,ax = myplt.OutInPlot(outliers_best,inliers_best,'OutIn_Unstable_Best',dists_eta,dists_V)
 
-flux_outliers=np.array(flux_outliers)
-flux_inlliers=np.array(flux_inliers)
+    EtaVsVout, axveta = myplt.OutInPlot(outliers_EtavsV,inliers_EtavsV,'OutInEtavsVbest')
+    axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
+    axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
+    plt.savefig('OutInEtavsVbest')
 
-outliers_EtavsV = outliers_EtavsV.T
-inliers_EtavsV =inliers_EtavsV.T
-
-
-
-figure,ax = myplt.OutInPlot(outliers_best,inliers_best,'OutIn_Unstable_Best',dists_eta_best,dists_V_best)
-EtaVsVout, axveta = myplt.OutInPlot(outliers_EtavsV,inliers_EtavsV,'OutInEtavsVbest')
-axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
-axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
-plt.savefig('OutInEtavsVbest')
-
-fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
-ax1.scatter(flux_outliers,outliers_EtavsV[:,0],color='red',label='Outliers')
-ax1.scatter(flux_inliers,inliers_EtavsV[:,0],color='blue',label='Inliers')
-ax2.scatter(flux_outliers,outliers_EtavsV[:,1],color='red',label='Outliers')
-ax2.scatter(flux_inliers,inliers_EtavsV[:,1],color='blue',label='Inliers')
-ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
-ax2.legend(fontsize=15,markerscale=1.5)
-ax1.legend(fontsize=15,markerscale=1.5)
-ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
-ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
-ax1.tick_params(labelsize=15)
-ax2.tick_params(labelsize=15)
-plt.savefig('EtavsVscatterinoutBest')
+    fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
+    ax1.scatter(flux_outliers,outliers_EtavsV[:,0],color='red',label='Outliers')
+    ax1.scatter(flux_inliers,inliers_EtavsV[:,0],color='blue',label='Inliers')
+    ax2.scatter(flux_outliers,outliers_EtavsV[:,1],color='red',label='Outliers')
+    ax2.scatter(flux_inliers,inliers_EtavsV[:,1],color='blue',label='Inliers')
+    ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
+    ax2.legend(fontsize=15,markerscale=1.5)
+    ax1.legend(fontsize=15,markerscale=1.5)
+    ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
+    ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
+    ax1.tick_params(labelsize=15)
+    ax2.tick_params(labelsize=15)
+    plt.savefig('EtavsVscatterinoutBest')
 
 
 

@@ -59,6 +59,7 @@ def BothOverLine(m_eta,q_eta,m_V,q_V,eta,V,flux,idx,ra,dec):
     dec_best = []
     for i,val in enumerate(eta[0]):
         if (val - (m_eta*flux[0,i]+q_eta)>=0) and (V[0,i]-(m_V*flux[0,i]+q_V)>=0):
+            #print(idx[:,i],val,m_eta*flux[0,i]+q_eta,V[0,i],m_V*flux[0,i]+q_V)
             flux_best_eta.append(flux[:,i])
             eta_best.append(eta[:,i])
             V_best.append(V[:,i])
@@ -98,19 +99,7 @@ def FindOutliersIdx(outliers,eta_best,V_best,idx,y_eta_best,y_V_best):
     for val in temp:
         if val[0] in outliers_found[0] and val[1] in outliers_found[1]:
             outliers_idx.append(int(val[2]))
-    
-    print('Indeces of the possible outliers', outliers_idx)
-    
     return outliers_idx
-
-"""    for val in outliers_found:
-        for i,val1 in enumerate(idx[0]):
-            print(val1)
-            if val[0]==val1 and val[1]==idx[1][i]:
-                outliers_idx.append(idx[2][i]) """
-
-  
-    
 
 def Probability(data, mean, sigma):
     prob=[]
