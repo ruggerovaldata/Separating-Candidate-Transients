@@ -10,9 +10,11 @@ import functions as func
 import scipy.optimize as spopt
 import scipy.stats as spstat
 
-
+# Inputs to edit
 names = ['GRBdata'] #Insert here the name of the .csv files that need to be analysed
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
+
+##############################
 
 # Reading the data files and creating the arrays to be used
 data = pd.read_csv(names[0]+'.csv')
@@ -21,62 +23,32 @@ for name in names:
     tmp_data = pd.read_csv(name+'.csv')
     data = data.append(tmp_data, ignore_index=True)
 
+# Filter out all sources with zero or negative variability parameters
 data = data.loc[ (data['V']>0.) & (data['eta']>0.)]
 
-idx = np.array((np.log10(data['eta']),np.log10(data['V']),data['runcat'],np.log10(data['maxFlx']))) #Connecting the data to their running catalog indexes
-eta = np.array((data['eta'],data['freq'])) #Collecting eta parameter of the data connected to the frequency
-V = np.array((data['V'],data['freq'])) #Same as for eta
-ra = np.array(data['ra'])#Getting the positions of the sources
-dec = np.array(data['dec'])
-max_flux = np.array((data['maxFlx'],data['freq'])) #Same as V and eta
-
-freq = data.freq.unique()  #Keeping track of the frequencies used eliminating duplicates
-
-
-#Loading the First file and creating the array that will be used
-
-#data = pd.read_csv(names[0]+'.csv') #Loading the first file
-#names.pop(0)
-#data = data.loc[ (data['V']>0.) & (data['eta']>0.)]
-
-#freq=[]
-#freq.append(data['freq'][2])
-
+# Create new columns in dataframe with log10 values
+print(data)
+data['logEta'] = data.apply(lambda row: np.log10(row.eta), axis=1)
+data['logV'] = data.apply(lambda row: np.log10(row.V), axis=1)
+data['logFlux'] = data.apply(lambda row: np.log10(row.maxFlx), axis=1)
+print(data)
 
 #idx = np.array((np.log10(data['eta']),np.log10(data['V']),data['runcat'],np.log10(data['maxFlx']))) #Connecting the data to their running catalog indexes
 #eta = np.array((data['eta'],data['freq'])) #Collecting eta parameter of the data connected to the frequency
 #V = np.array((data['V'],data['freq'])) #Same as for eta
-
 #ra = np.array(data['ra'])#Getting the positions of the sources
 #dec = np.array(data['dec'])
-
 #max_flux = np.array((data['maxFlx'],data['freq'])) #Same as V and eta
-#i=1
 
-#print('Sources in the file number ', i, ' : ', eta.shape[-1])
-# Loading the rest of the files
-#i=2
-#for name in names: 
-#    temp_eta, temp_V, temp_flux, temp_idx = func.Data_Load(name+'.csv')
-#    print('Sources in the file number ', i, ' : ', temp_eta.shape[-1])
-#    freq.append(temp_eta[1][0])
-#    eta = np.concatenate((eta,temp_eta),axis=1)
-#    V = np.concatenate((V,temp_V),axis=1)
-#    max_flux = np.concatenate((max_flux,temp_flux),axis=1)
-#    idx= np.concatenate((idx,temp_idx),axis=1)
-#    i+=1
+freq = data.freq.unique()  #Keeping track of the frequencies used eliminating duplicates
 
-#freq=np.array(freq)
-#freq=np.unique(freq) #Keeping track of the frequencies used eliminating duplicates
+#eta_log = np.array((np.log10(eta[0]),eta[1]))
+#V_log = np.array((np.log10(V[0]),V[1]))
+#flux_log = np.array((np.log10(max_flux[0]),max_flux[1]))
 
+print('Number of sources analysed:', len(data))
 
-eta_log = np.array((np.log10(eta[0]),eta[1]))
-V_log = np.array((np.log10(V[0]),V[1]))
-flux_log = np.array((np.log10(max_flux[0]),max_flux[1]))
-
-print('Number of sources analysed:', eta_log.shape[-1])
-
-fig,ax1,ax2=myplt.EtaVscatter(eta_log,V_log,flux_log,freq,'EtavsVUn')
+fig,ax1,ax2=myplt.EtaVscatter([data.logEta,data.freq],[data.logV, data.freq],[data.logFlux,data.freq],freq,'EtavsVUn')
 
 #Finding the line that best represents the two parameters of the data
 
@@ -138,7 +110,6 @@ inliers = np.array(inliers)
 outliers = np.array(outliers)
 
 
-print('\n WHOLE DATASET: \n')
 outliers_whole = func.FindOutliersIdx(outliers,eta_log, V_log, idx, y_eta, y_V)
 outliers_eta=[]
 outliers_V=[]
