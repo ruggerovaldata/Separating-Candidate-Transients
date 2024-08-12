@@ -10,6 +10,7 @@ import functions as func
 import scipy.optimize as spopt
 import scipy.stats as spstat
 
+<<<<<<< HEAD
 # Inputs to edit
 names = ['GRBdata'] #Insert here the name of the .csv files that need to be analysed
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
@@ -24,6 +25,53 @@ for name in names:
     data = data.append(tmp_data, ignore_index=True)
 
 # Filter out all sources with zero or negative variability parameters
+=======
+import sqlalchemy
+from sqlalchemy import *
+from sqlalchemy.orm import relationship
+from dblogin import *
+import dbtools 
+import tkp.db
+import os
+import os.path
+
+#plt.rcParams['text.usetex']=True
+
+p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
+
+database = 'antoniar' 
+dataset_ids = [1]
+
+global db 
+
+# Connect to the database and run the queries
+session = dbtools.access(engine,host,port,user,password,database)
+dataset_ids_TMP=[]
+for dataset_id in dataset_ids:
+    if not os.path.isfile('ds'+str(dataset_id)+'.csv'):
+        VarParams = dbtools.GetVarParams(session,dataset_id)   # Get the running catalogue and varmetric catalogues and combine
+        plotdata = [[VarParams[i].Runningcatalog.id, VarParams[i].Varmetric.eta_int, VarParams[i].Varmetric.v_int,
+                            VarParams[i].Varmetric.lightcurve_max, VarParams[i].Varmetric.lightcurve_median,
+                            (VarParams[i].Varmetric.band.freq_central/1e6), VarParams[i].Runningcatalog.datapoints,
+                            VarParams[i].Varmetric.newsource, VarParams[i].Runningcatalog.wm_ra, VarParams[i].Runningcatalog.wm_decl] for i in range(len(VarParams))]
+        plotdata = pd.DataFrame(data=plotdata,columns=['runcat','eta','V','maxFlx','avgFlx','freq','dpts','newSrc','ra','dec'])
+        plotdata = plotdata.fillna('N')
+        plotdata = plotdata.loc[(plotdata['eta'] > 0) & (plotdata['V'] > 0) & (plotdata['dpts']>1) & (plotdata['newSrc']=='N')]
+        if len(plotdata) != 0:
+            # Save the data for plotting
+            plotdata.to_csv('ds'+str(dataset_id)+'.csv', index=False)
+        else:
+            print('Dataset '+str(dataset_id)+' contains no sources. Remove from list.')
+            dataset_ids_TMP.append(dataset_id)
+
+for id in dataset_ids_TMP:
+    dataset_ids.remove(id)
+
+#Loading the First file and creating the array that will be used
+
+data = pd.read_csv('ds'+str(dataset_ids[0])+'.csv') #Loading the first file
+dataset_ids.pop(0)
+>>>>>>> ba0d7ef (Combining ExtractCsv and Finding Candidate Transients into a single python file)
 data = data.loc[ (data['V']>0.) & (data['eta']>0.)]
 
 # Create new columns in dataframe with log10 values
@@ -31,11 +79,52 @@ data['logEta'] = data.apply(lambda row: np.log10(row.eta), axis=1)
 data['logV'] = data.apply(lambda row: np.log10(row.V), axis=1)
 data['logFlux'] = data.apply(lambda row: np.log10(row.maxFlx), axis=1)
 
+<<<<<<< HEAD
 freq = data.freq.unique()  #Keeping track of the frequencies used eliminating duplicates
 
 print('Number of sources analysed:', len(data))
 
 fig,ax1,ax2=myplt.EtaVscatter(data,freq,'EtavsVUn')
+=======
+idx = np.array((np.log10(data['eta']),np.log10(data['V']),data['runcat'],np.log10(data['maxFlx']))) #Connecting the data to their running catalog indexes
+eta = np.array((data['eta'],data['freq'])) #Collecting eta parameter of the data connected to the frequency
+
+ra = np.array(data['ra'])#Getting the positions of the sources
+dec = np.array(data['dec'])
+
+
+V = np.array((data['V'],data['freq'])) #Same as for eta
+
+max_flux = np.array((data['maxFlx'],data['freq'])) #Same as V and eta
+i=1
+
+print('Sources in the file number ', i, ' : ', eta.shape[-1])
+
+# Loading the rest of the files
+i=2
+
+for name in dataset_ids: 
+    temp_eta, temp_V, temp_flux, temp_idx = func.Data_Load('ds'+str(name)+'.csv')
+    print('Sources in the file number ', i, ' : ', temp_eta.shape[-1])
+    freq.append(temp_eta[1][0])
+    eta = np.concatenate((eta,temp_eta),axis=1)
+    V = np.concatenate((V,temp_V),axis=1)
+    max_flux = np.concatenate((max_flux,temp_flux),axis=1)
+    idx= np.concatenate((idx,temp_idx),axis=1)
+    i+=1
+
+freq=np.array(freq)
+freq=np.unique(freq) #Keeping track of the frequencies used eliminating duplicates
+
+
+eta_log = np.array((np.log10(eta[0]),eta[1]))
+V_log = np.array((np.log10(V[0]),V[1]))
+flux_log = np.array((np.log10(max_flux[0]),max_flux[1]))
+
+print('Number of sources analysed:', eta_log.shape[-1])
+
+fig,ax1,ax2=myplt.EtaVscatter(eta_log,V_log,flux_log,freq,'EtavsVUn')
+>>>>>>> ba0d7ef (Combining ExtractCsv and Finding Candidate Transients into a single python file)
 
 #Finding the line that best represents the two parameters of the data
 best_params_eta, ml_cfcovar_linear = spopt.curve_fit(func.LinearFit, data.logFlux, data.logEta)
