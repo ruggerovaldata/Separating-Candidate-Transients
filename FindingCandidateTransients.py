@@ -6,7 +6,6 @@ import pylab
 import numpy as np 
 import pandas as pd 
 import myplotting as myplt
-import functions as func
 import scipy.optimize as spopt
 import scipy.stats as spstat
 
@@ -19,14 +18,30 @@ import tkp.db
 import os
 import os.path
 
-#plt.rcParams['text.usetex']=True
+
+def LinearFit(data,a,b):
+    return a * data + b
+
+def Params_distance(y_o,y_p):
+    return (y_o-y_p)
+
+def Probability(data, mean, sigma):
+    prob=[]
+    for x in data: 
+        dist = np.dot((x-mean).transpose(),np.linalg.inv(sigma))
+        dist = np.dot(dist,(x-mean))
+        prob.append(1- spstat.chi2.cdf(dist,2))
+    prob = np.array(prob)        
+
+    return prob*100
+
 
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
 
-database = 'antoniar' 
-dataset_ids = [1]
+database = '' 
+dataset_ids = []
 
-global db 
+global db
 
 # Connect to the database and run the queries
 session = dbtools.access(engine,host,port,user,password,database)
@@ -57,8 +72,7 @@ data = pd.read_csv('ds'+str(dataset_ids[0])+'.csv') #Loading the first file
 dataset_ids.pop(0)
 
 for name in dataset_ids:
-    data.append(pd.read_csv('ds'+str(dataset_ids[0])+'.csv'))
-
+    data=pd.concat([data,pd.read_csv('ds'+str(name)+'.csv')], ignore_index=True)
 
 data = data.loc[ (data['V']>0.) & (data['eta']>0.)]
 
@@ -73,21 +87,18 @@ print('Number of sources analysed:', len(data))
 
 fig,ax1,ax2=myplt.EtaVscatter(data,freq,'EtavsVUn')
 
-print('If the number of data points is low, these fits may fail.')
-print('Number of datapoints = '+str(len(data))+' (>10 ideally)')
-
 #Finding the line that best represents the two parameters of the data
-best_params_eta, ml_cfcovar_linear = spopt.curve_fit(func.LinearFit, data.logFlux, data.logEta)
-best_params_V, ml_cfcovar_linear = spopt.curve_fit(func.LinearFit, data.logFlux, data.logV)
+best_params_eta, ml_cfcovar_linear = spopt.curve_fit(LinearFit,data.logFlux.values, data.logEta.values)
+best_params_V, ml_cfcovar_linear = spopt.curve_fit(LinearFit, data.logFlux.values, data.logV.values)
 
 m_eta, q_eta = best_params_eta[0],best_params_eta[1]
 m_V, q_V = best_params_V[0],best_params_V[1]
 
-y_eta = func.LinearFit(data.logFlux,m_eta,q_eta)
-y_V = func.LinearFit(data.logFlux,m_V,q_V)
+y_eta = LinearFit(data.logFlux.values,m_eta,q_eta)
+y_V = LinearFit(data.logFlux.values,m_V,q_V)
 
-ax1.plot(data.logFlux,y_eta,label='Best fit',color='gray', ls='--')
-ax2.plot(data.logFlux,y_V,label='Best fit',color='gray',ls='--')
+ax1.plot(data.logFlux.values,y_eta,label='Best fit',color='gray', ls='--')
+ax2.plot(data.logFlux.values,y_V,label='Best fit',color='gray',ls='--')
 ax1.set_title(r'Linear Fit Stable and unstable sources',fontsize=20)
 ax1.legend(fontsize=15,markerscale=1.5)
 ax2.legend(fontsize=15,markerscale=1.5)
@@ -98,25 +109,24 @@ plt.close()
 
 #Calculating the paramater distance from the line that has been found earlier
 
-data['distsEta'] = data.apply(lambda row: func.Params_distance(row.logEta,func.LinearFit(row.logFlux,m_eta,q_eta)), axis=1)
-data['distsV'] = data.apply(lambda row: func.Params_distance(row.logV,func.LinearFit(row.logFlux,m_V,q_V)), axis=1)
+data['distsEta'] = data.apply(lambda row: Params_distance(row.logEta,LinearFit(row.logFlux,m_eta,q_eta)), axis=1)
+data['distsV'] = data.apply(lambda row: Params_distance(row.logV,LinearFit(row.logFlux,m_V,q_V)), axis=1)
 
 
 #Creating a matrix necessary to calculate the Gaussian distribution of the data.
 print('\n WHOLE DATASET: \n')
 
 ndim = 2
-data_graph = np.vstack([data.distsEta,data.distsV])
+data_graph = np.vstack([data.distsEta.values,data.distsV.values])
 data_graph = data_graph.T
-
-mean_deta = np.mean(data.distsEta)
-mean_dV = np.mean(data.distsV)
+mean_deta = np.mean(data.distsEta.values)
+mean_dV = np.mean(data.distsV.values)
 mu = [mean_deta,mean_dV]
 
-cov_matrix = np.cov(data.distsEta,data.distsV)
+cov_matrix = np.cov(data.distsEta.values,data.distsV.values)
 likelihood = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_matrix)
 
-outliers_prob = func.Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
+outliers_prob = Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
 
 data['probability'] = 100.-outliers_prob
 temp = data.sort_values('probability')
@@ -162,8 +172,6 @@ else:
     print(outliers)
     outliers.to_csv('Outliers.csv', index=False)
 
-
-
     
 print('\n DATASET ABOVE THE LINE: \n')
 
@@ -181,7 +189,7 @@ mu = [mean_deta,mean_dV]
 cov_matrix = np.cov(dataBest.distsEta,dataBest.distsV)
 likelihood = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_matrix)
 
-outliers_prob = func.Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
+outliers_prob = Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
 
 dataBest['probability'] = 100.-outliers_prob
 temp = dataBest.sort_values('probability')
