@@ -1,6 +1,6 @@
 engine = 'postgresql'
-host = ''
-port = 5432
+host = 'localhost'
+port = 
 user = ''
 password = ''
 
