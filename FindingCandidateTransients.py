@@ -38,8 +38,8 @@ def Probability(data, mean, sigma):
 
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
 
-database = '' 
-dataset_ids = []
+database = 'rvaldata' 
+dataset_ids = [1]
 
 global db
 
@@ -102,6 +102,8 @@ ax2.plot(data.logFlux.values,y_V,label='Best fit',color='gray',ls='--')
 ax1.set_title(r'Linear Fit Stable and unstable sources',fontsize=20)
 ax1.legend(fontsize=15,markerscale=1.5)
 ax2.legend(fontsize=15,markerscale=1.5)
+ax1.tick_params(axis='both', which='major', labelsize=20)
+ax2.tick_params(axis='both', which='major', labelsize=20)
 plt.show()
 plt.savefig('ParametersLinearFit.png')
 plt.close()
@@ -129,7 +131,7 @@ likelihood = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_m
 outliers_prob = Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
 
 data['probability'] = 100.-outliers_prob
-temp = data.sort_values('probability')
+data = data.sort_values('probability',ascending=False)
 data.to_csv('Wholedatasetoutput.csv', index=False)
 
 figure, axes = myplt.MyCorner(data.distsEta,data.distsV,data.probability/100.,'CornerPlot') #Printing the corner plot both with the likelihood and without the likelihood
@@ -140,6 +142,13 @@ chi2 = spstat.chi2.ppf([p],2)[0]
 inliers = data.loc[ (data['probability'] <= p*100.) | ( (data['distsEta'] < 0) | (data['distsV'] < 0))]
 outliers = data.loc[ (data['probability'] > p*100.) & (data['distsEta'] > 0) & (data['distsV'] > 0)]
 
+for i,val in enumerate(data.runcat.values): 
+    if val == 91:
+        eta_155= data.logEta.values[i]
+        V_155 = data.logV.values[i]
+        flux_155 = data.logFlux.values[i]
+        print(eta_155,V_155)
+
 # Plotting
 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
 
@@ -148,19 +157,26 @@ ax1.scatter(inliers.logFlux,inliers.logEta,color='blue',label='Inliers')
 ax2.scatter(outliers.logFlux,outliers.logV,color='red',label='Outliers')
 ax2.scatter(inliers.logFlux,inliers.logV,color='blue',label = 'Inliers')
 
+ax2.scatter(flux_155,V_155,marker='*',color='black',s=150)
+ax1.scatter(flux_155,eta_155,marker='*',color='black',s=150)
+
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
 ax2.legend(fontsize=15,markerscale=1.5)
 ax1.legend(fontsize=15,markerscale=1.5)
 ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
 ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
-ax1.tick_params(labelsize=15)
-ax2.tick_params(labelsize=15)
+ax1.tick_params(labelsize=20)
+ax2.tick_params(labelsize=20)
 plt.savefig('EtavsVscatterinout')
+
+
 
 figure,ax = myplt.OutInPlot(np.array([outliers.distsEta, outliers.distsV]).T,np.array([inliers.distsEta,inliers.distsV]).T,'OutIn_Unstable')
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliers.logEta, outliers.logV]).T,np.array([inliers.logEta,inliers.logV]).T,'OutInEtavsV')
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
+axveta.scatter(eta_155,V_155,marker='*',color='black',s=150)
+axveta.tick_params(axis='both', which='major', labelsize=20)
 plt.savefig('OutInEtavsV')
 
 # Outputting variable candidates
@@ -169,6 +185,7 @@ print('Number of outliers : ', len(outliers))
 if len(outliers) == 0:
     print('No candidate variable sources found.')
 else:
+    outliers = outliers.sort_values('probability',ascending=False)
     print(outliers)
     outliers.to_csv('Outliers.csv', index=False)
 
@@ -192,7 +209,7 @@ likelihood = spstat.multivariate_normal.pdf(data_graph,[mean_deta,mean_dV],cov_m
 outliers_prob = Probability(data_graph,mu,cov_matrix) #Calculating the probability for every parameter of being associated to an "inlier" source
 
 dataBest['probability'] = 100.-outliers_prob
-temp = dataBest.sort_values('probability')
+dataBest = dataBest.sort_values('probability',ascending=False)
 dataBest.to_csv('WholedatasetoutputBest.csv', index=False)
 
 figure, axes = myplt.MyCorner(dataBest.distsEta,dataBest.distsV,dataBest.probability/100.,'CornerPlotBest') #Printing the corner plot both with the likelihood and without the likelihood
@@ -216,14 +233,15 @@ ax2.legend(fontsize=15,markerscale=1.5)
 ax1.legend(fontsize=15,markerscale=1.5)
 ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
 ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
-ax1.tick_params(labelsize=15)
-ax2.tick_params(labelsize=15)
+ax1.tick_params(labelsize=20)
+ax2.tick_params(labelsize=20)
 plt.savefig('EtavsVscatterinoutBest')
 
 figure,ax = myplt.OutInPlot(np.array([outliersBest.distsEta, outliersBest.distsV]).T,np.array([inliersBest.distsEta,inliersBest.distsV]).T,'OutIn_UnstableBest')
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliersBest.logEta, outliersBest.logV]).T,np.array([inliersBest.logEta,inliersBest.logV]).T,'OutInEtavsVBest')
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
+axveta.tick_params(axis='both', which='major', labelsize=20)
 plt.savefig('OutInEtavsVBest')
 
 # Outputting variable candidates
@@ -232,5 +250,6 @@ print('Number of outliers : ', len(outliersBest))
 if len(outliersBest) == 0:
     print('No candidate variable sources found.')
 else:
+    outliersBest = outliersBest.sort_values('probability',ascending=False)
     print(outliersBest)
     outliersBest.to_csv('OutliersBest.csv', index=False)

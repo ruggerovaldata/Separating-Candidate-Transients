@@ -35,8 +35,8 @@ def EtaVscatter(data,freq,name):
     ax2.legend(fontsize=15,markerscale=1.5)
     ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
     ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
-    ax1.tick_params(labelsize=15)
-    ax2.tick_params(labelsize=15)
+    ax1.tick_params(labelsize=20)
+    ax2.tick_params(labelsize=20)
     plt.savefig( name +'.png')
     return fig, ax1,ax2
         
@@ -117,6 +117,8 @@ def EtaVscatterover(Eta,V,Flux_eta, Flux_V,freq,name):
     ax2.legend(fontsize='small')
     ax2.set_ylabel(r'$V_{\nu}$')
     ax2.set_xlabel('Max Flux')
+    ax1.tick_params(axis='both', which='major', labelsize=20)
+    ax2.tick_params(axis='both', which='major', labelsize=20)
 
     plt.savefig( name +'.png')
     return fig, ax1,ax2
@@ -143,16 +145,18 @@ def MyCorner(dists_eta,dists_V,likelihood,name):
     ax_histx.set_ylabel(r'Counts',fontsize=30)
     ax_histy.hist(dists_V,bins=20,orientation='horizontal',color='orange',density=True)
     ax.scatter(dists_eta,dists_V,s=50,color='grey')
-    ax.tick_params(labelsize=15)
+    ax.tick_params(labelsize=20)
     ax.set_ylabel(r'Dists $V_{\nu}$',fontsize=30)
     ax.set_xlabel(r'Dists $\eta_{\nu}$',fontsize=30)
     ax_histy.set_xlabel(r'Dists $V_{\nu}$',fontsize=30)
-    ax_histy.tick_params(labelsize=15)
+    ax_histy.tick_params(labelsize=20)
+    ax_histx.tick_params(axis='both', which='major', labelsize=20)
     
 
     plt.savefig(name)
 
     ax.scatter(dists_eta,dists_V,c=likelihood,s=50)
+    ax.tick_params(axis='both', which='major', labelsize=20)
     plt.savefig(name+'_Likelihood.png')
     return fig,[ax,ax_histx,ax_histy]
 
@@ -166,5 +170,6 @@ def OutInPlot(outliers,inliers,name,dists_eta_un=[],dists_V_un=[]):
     ax.set_ylabel(r'Dists $V_{\nu}$',fontsize=30)
     #ax.scatter(dists_eta_un,dists_V_un,facecolors='None',label='TO',edgecolors='black')
     ax.legend(fontsize=20,markerscale=1.5)
+    ax.tick_params(axis='both', which='major', labelsize=20)
     plt.savefig(name)
     return figure, ax
