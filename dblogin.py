@@ -1,13 +1,6 @@
 engine = 'postgresql'
-<<<<<<< Updated upstream
-host = ''
-port = 5432
+host = 'localhost'
+port = 
 user = ''
 password = ''
-=======
-host = ''
-port = 5432
-user = ''
-password = ''
->>>>>>> Stashed changes
 
