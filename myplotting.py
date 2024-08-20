@@ -4,23 +4,20 @@ import pylab
 pylab.rcParams['legend.loc'] = 'best'
 
 
-def EtaVscatter(Eta,V,Flux,freq,name):
+#def EtaVscatter(Eta,V,Flux,freq,name):
+def EtaVscatter(data,freq,name):
+
+    fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
+
     eta_graph=[]
     flux_graph=[]
-    V_graph = []
-
-    for val in freq: 
-        temp_flux=[]
-        temp_eta=[]
-        temp_V =[]
-        for i,f in enumerate(Flux[1,:]):
-            if val == f:
-                temp_eta.append(Eta[0,i])
-                temp_flux.append(Flux[0,i])
-                temp_V.append(V[0,i])
-        eta_graph.append(temp_eta)
-        flux_graph.append(temp_flux)
-        V_graph.append(temp_V)
+    V_graph=[]
+    
+    for i,val in enumerate(freq):
+        tmp = data.loc[data['freq'] == val]
+        eta_graph.append(tmp.logEta)
+        flux_graph.append(tmp.logFlux)
+        V_graph.append(tmp.logV)
 
     eta_graph = np.array(eta_graph,dtype=list)
     flux_graph = np.array(flux_graph,dtype=list)
@@ -38,11 +35,8 @@ def EtaVscatter(Eta,V,Flux,freq,name):
     ax2.legend(fontsize=15,markerscale=1.5)
     ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
     ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
-    ax1.tick_params(labelsize=15)
-    ax2.tick_params(labelsize=15)
-    #ax1.set_xticklabels(, fontsize=20)
-    #ax1.set_yticks(yvals)
-    #ax1.set_yticklabels(ytxts, fontsize=20)
+    ax1.tick_params(labelsize=20)
+    ax2.tick_params(labelsize=20)
     plt.savefig( name +'.png')
     return fig, ax1,ax2
         
@@ -123,6 +117,8 @@ def EtaVscatterover(Eta,V,Flux_eta, Flux_V,freq,name):
     ax2.legend(fontsize='small')
     ax2.set_ylabel(r'$V_{\nu}$')
     ax2.set_xlabel('Max Flux')
+    ax1.tick_params(axis='both', which='major', labelsize=20)
+    ax2.tick_params(axis='both', which='major', labelsize=20)
 
     plt.savefig( name +'.png')
     return fig, ax1,ax2
@@ -149,16 +145,18 @@ def MyCorner(dists_eta,dists_V,likelihood,name):
     ax_histx.set_ylabel(r'Counts',fontsize=30)
     ax_histy.hist(dists_V,bins=20,orientation='horizontal',color='orange',density=True)
     ax.scatter(dists_eta,dists_V,s=50,color='grey')
-    ax.tick_params(labelsize=15)
+    ax.tick_params(labelsize=20)
     ax.set_ylabel(r'Dists $V_{\nu}$',fontsize=30)
     ax.set_xlabel(r'Dists $\eta_{\nu}$',fontsize=30)
     ax_histy.set_xlabel(r'Dists $V_{\nu}$',fontsize=30)
-    ax_histy.tick_params(labelsize=15)
+    ax_histy.tick_params(labelsize=20)
+    ax_histx.tick_params(axis='both', which='major', labelsize=20)
     
 
     plt.savefig(name)
 
     ax.scatter(dists_eta,dists_V,c=likelihood,s=50)
+    ax.tick_params(axis='both', which='major', labelsize=20)
     plt.savefig(name+'_Likelihood.png')
     return fig,[ax,ax_histx,ax_histy]
 
@@ -172,5 +170,6 @@ def OutInPlot(outliers,inliers,name,dists_eta_un=[],dists_V_un=[]):
     ax.set_ylabel(r'Dists $V_{\nu}$',fontsize=30)
     #ax.scatter(dists_eta_un,dists_V_un,facecolors='None',label='TO',edgecolors='black')
     ax.legend(fontsize=20,markerscale=1.5)
+    ax.tick_params(axis='both', which='major', labelsize=20)
     plt.savefig(name)
     return figure, ax
