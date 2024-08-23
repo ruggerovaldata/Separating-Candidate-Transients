@@ -36,7 +36,7 @@ def Probability(data, mean, sigma):
     return prob*100
 
 
-p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
+p = 0.95 #Inserting here the percentage with which the source should be classified as inlier
 
 database = 'rvaldata' 
 dataset_ids = [1]
@@ -142,12 +142,8 @@ chi2 = spstat.chi2.ppf([p],2)[0]
 inliers = data.loc[ (data['probability'] <= p*100.) | ( (data['distsEta'] < 0) | (data['distsV'] < 0))]
 outliers = data.loc[ (data['probability'] > p*100.) & (data['distsEta'] > 0) & (data['distsV'] > 0)]
 
-for i,val in enumerate(data.runcat.values): 
-    if val == 91:
-        eta_155= data.logEta.values[i]
-        V_155 = data.logV.values[i]
-        flux_155 = data.logFlux.values[i]
-        print(eta_155,V_155)
+
+    
 
 # Plotting
 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
@@ -157,8 +153,6 @@ ax1.scatter(inliers.logFlux,inliers.logEta,color='blue',label='Inliers')
 ax2.scatter(outliers.logFlux,outliers.logV,color='red',label='Outliers')
 ax2.scatter(inliers.logFlux,inliers.logV,color='blue',label = 'Inliers')
 
-ax2.scatter(flux_155,V_155,marker='*',color='black',s=150)
-ax1.scatter(flux_155,eta_155,marker='*',color='black',s=150)
 
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
 ax2.legend(fontsize=15,markerscale=1.5)
@@ -175,8 +169,7 @@ figure,ax = myplt.OutInPlot(np.array([outliers.distsEta, outliers.distsV]).T,np.
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliers.logEta, outliers.logV]).T,np.array([inliers.logEta,inliers.logV]).T,'OutInEtavsV')
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
-axveta.scatter(eta_155,V_155,marker='*',color='black',s=150)
-axveta.tick_params(axis='both', which='major', labelsize=20)
+plt.legend()
 plt.savefig('OutInEtavsV')
 
 # Outputting variable candidates
