@@ -36,10 +36,10 @@ def Probability(data, mean, sigma):
     return prob*100
 
 
-p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
+p = 0.95 #Inserting here the percentage with which the source should be classified as inlier
 
-database = 'rvaldata' 
-dataset_ids = [1]
+database = 'antoniar' 
+dataset_ids = [16,17,18,19]
 
 global db
 
@@ -73,6 +73,7 @@ dataset_ids.pop(0)
 
 for name in dataset_ids:
     data=pd.concat([data,pd.read_csv('ds'+str(name)+'.csv')], ignore_index=True)
+
 
 data = data.loc[ (data['V']>0.) & (data['eta']>0.)]
 
@@ -142,12 +143,21 @@ chi2 = spstat.chi2.ppf([p],2)[0]
 inliers = data.loc[ (data['probability'] <= p*100.) | ( (data['distsEta'] < 0) | (data['distsV'] < 0))]
 outliers = data.loc[ (data['probability'] > p*100.) & (data['distsEta'] > 0) & (data['distsV'] > 0)]
 
-for i,val in enumerate(data.runcat.values): 
+identified_prev_eta = []
+identified_prev_V = []
+
+
+""" for i,val in enumerate(data.runcat.values): 
     if val == 91:
         eta_155= data.logEta.values[i]
         V_155 = data.logV.values[i]
         flux_155 = data.logFlux.values[i]
-        print(eta_155,V_155)
+        #print(eta_155,V_155)
+    if val == 97 or val == 164:
+        identified_prev_eta.append(data.logEta.values[i])
+        identified_prev_V.append(data.logV.values[i]) """
+    
+        
 
 # Plotting
 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
@@ -157,8 +167,8 @@ ax1.scatter(inliers.logFlux,inliers.logEta,color='blue',label='Inliers')
 ax2.scatter(outliers.logFlux,outliers.logV,color='red',label='Outliers')
 ax2.scatter(inliers.logFlux,inliers.logV,color='blue',label = 'Inliers')
 
-ax2.scatter(flux_155,V_155,marker='*',color='black',s=150)
-ax1.scatter(flux_155,eta_155,marker='*',color='black',s=150)
+""" ax2.scatter(flux_155,V_155,marker='*',color='black',s=150)
+ax1.scatter(flux_155,eta_155,marker='*',color='black',s=150) """
 
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
 ax2.legend(fontsize=15,markerscale=1.5)
@@ -169,14 +179,21 @@ ax1.tick_params(labelsize=20)
 ax2.tick_params(labelsize=20)
 plt.savefig('EtavsVscatterinout')
 
+eta_old_treshold = 16.5
+V_old_treshold = 0.204
 
+eta_136, V_136 = 436.4864800401786,0.1273355647223771
 
 figure,ax = myplt.OutInPlot(np.array([outliers.distsEta, outliers.distsV]).T,np.array([inliers.distsEta,inliers.distsV]).T,'OutIn_Unstable')
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliers.logEta, outliers.logV]).T,np.array([inliers.logEta,inliers.logV]).T,'OutInEtavsV')
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
-axveta.scatter(eta_155,V_155,marker='*',color='black',s=150)
+axveta.scatter(np.log10(eta_136),np.log10(V_136),marker='*',color='black',s=150, alpha=0.5)
 axveta.tick_params(axis='both', which='major', labelsize=20)
+axveta.scatter(identified_prev_eta,identified_prev_V,marker='*',color='black',s=150, alpha=0.5, label='Identified in Rowlinson et al. 2022')
+axveta.axvline(np.log10(eta_old_treshold),color = 'grey',ls='--')
+axveta.axhline(np.log10(V_old_treshold),color = 'grey',ls='--')
+plt.legend()
 plt.savefig('OutInEtavsV')
 
 # Outputting variable candidates
