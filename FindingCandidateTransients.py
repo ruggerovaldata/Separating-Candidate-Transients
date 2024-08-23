@@ -8,6 +8,7 @@ import pandas as pd
 import myplotting as myplt
 import scipy.optimize as spopt
 import scipy.stats as spstat
+from scipy.stats import norm
 
 import sqlalchemy
 from sqlalchemy import *
@@ -17,6 +18,7 @@ import dbtools
 import tkp.db
 import os
 import os.path
+
 
 
 def LinearFit(data,a,b):
@@ -35,11 +37,20 @@ def Probability(data, mean, sigma):
 
     return prob*100
 
+def SigmaFit(data):
+    median = np.median(data)
+    std_median = np.sqrt(np.mean([(i-median)**2. for i in data]))
+    tmp_data = [a for a in data if a < 3.*std_median+median and a > median - 3.*std_median]
+    param1 = norm.fit(tmp_data)
+    param2 = norm.fit(data)
+    return param1, param2
+
 
 p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
 
-database = 'rvaldata' 
-dataset_ids = [1]
+database = 'antoniar' 
+dataset_ids = [6]
+sigmaThresh = 2
 
 global db
 
@@ -85,6 +96,17 @@ freq = data.freq.unique()  #Keeping track of the frequencies used eliminating du
 
 print('Number of sources analysed:', len(data))
 
+# finding the old sigma thresholds for plotting later
+paramx, paramx2 = SigmaFit(data['logEta'])
+paramy, paramy2 = SigmaFit(data['logV'])
+sigcutx = paramx[1]*sigmaThresh+paramx[0]
+sigcuty = paramy[1]*sigmaThresh+paramy[0]
+
+tmp_data=data.loc[ (data['logEta'] > sigcutx) & (data['logV'] > sigcuty)]
+
+print('2sigma outliers are:')
+print(tmp_data)
+
 fig,ax1,ax2=myplt.EtaVscatter(data,freq,'EtavsVUn')
 
 #Finding the line that best represents the two parameters of the data
@@ -94,16 +116,19 @@ best_params_V, ml_cfcovar_linear = spopt.curve_fit(LinearFit, data.logFlux.value
 m_eta, q_eta = best_params_eta[0],best_params_eta[1]
 m_V, q_V = best_params_V[0],best_params_V[1]
 
+print('eta linear fit parameters: m = '+str(np.around(m_eta,3))+' q = '+str(np.around(q_eta,3)))
+print('V linear fit parameters: : m = '+str(np.around(m_V,3))+' q = '+str(np.around(q_V,3)))
+
 y_eta = LinearFit(data.logFlux.values,m_eta,q_eta)
 y_V = LinearFit(data.logFlux.values,m_V,q_V)
 
 ax1.plot(data.logFlux.values,y_eta,label='Best fit',color='gray', ls='--')
 ax2.plot(data.logFlux.values,y_V,label='Best fit',color='gray',ls='--')
-ax1.set_title(r'Linear Fit Stable and unstable sources',fontsize=20)
-ax1.legend(fontsize=15,markerscale=1.5)
-ax2.legend(fontsize=15,markerscale=1.5)
-ax1.tick_params(axis='both', which='major', labelsize=20)
-ax2.tick_params(axis='both', which='major', labelsize=20)
+#ax1.set_title(r'Linear Fit Stable and unstable sources',fontsize=25)
+ax1.legend(fontsize=25,markerscale=1.5)
+ax2.legend(fontsize=25,markerscale=1.5)
+ax1.tick_params(axis='both', which='major', labelsize=25)
+ax2.tick_params(axis='both', which='major', labelsize=25)
 plt.show()
 plt.savefig('ParametersLinearFit.png')
 plt.close()
@@ -142,12 +167,6 @@ chi2 = spstat.chi2.ppf([p],2)[0]
 inliers = data.loc[ (data['probability'] <= p*100.) | ( (data['distsEta'] < 0) | (data['distsV'] < 0))]
 outliers = data.loc[ (data['probability'] > p*100.) & (data['distsEta'] > 0) & (data['distsV'] > 0)]
 
-for i,val in enumerate(data.runcat.values): 
-    if val == 91:
-        eta_155= data.logEta.values[i]
-        V_155 = data.logV.values[i]
-        flux_155 = data.logFlux.values[i]
-        print(eta_155,V_155)
 
 # Plotting
 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
@@ -157,12 +176,9 @@ ax1.scatter(inliers.logFlux,inliers.logEta,color='blue',label='Inliers')
 ax2.scatter(outliers.logFlux,outliers.logV,color='red',label='Outliers')
 ax2.scatter(inliers.logFlux,inliers.logV,color='blue',label = 'Inliers')
 
-ax2.scatter(flux_155,V_155,marker='*',color='black',s=150)
-ax1.scatter(flux_155,eta_155,marker='*',color='black',s=150)
-
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
-ax2.legend(fontsize=15,markerscale=1.5)
-ax1.legend(fontsize=15,markerscale=1.5)
+ax2.legend(fontsize=25,markerscale=1.5)
+ax1.legend(fontsize=25,markerscale=1.5)
 ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
 ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
 ax1.tick_params(labelsize=20)
@@ -173,10 +189,12 @@ plt.savefig('EtavsVscatterinout')
 
 figure,ax = myplt.OutInPlot(np.array([outliers.distsEta, outliers.distsV]).T,np.array([inliers.distsEta,inliers.distsV]).T,'OutIn_Unstable')
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliers.logEta, outliers.logV]).T,np.array([inliers.logEta,inliers.logV]).T,'OutInEtavsV')
+axveta.axvline(x=sigcutx, linewidth=2, color='k', linestyle='--')
+axveta.axhline(y=sigcuty, linewidth=2, color='k', linestyle='--')
+
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
-axveta.scatter(eta_155,V_155,marker='*',color='black',s=150)
-axveta.tick_params(axis='both', which='major', labelsize=20)
+axveta.tick_params(axis='both', which='major', labelsize=25)
 plt.savefig('OutInEtavsV')
 
 # Outputting variable candidates
@@ -229,8 +247,8 @@ ax2.scatter(outliersBest.logFlux,outliersBest.logV,color='red',label='Outliers')
 ax2.scatter(inliersBest.logFlux,inliersBest.logV,color='blue',label = 'Inliers')
 
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
-ax2.legend(fontsize=15,markerscale=1.5)
-ax1.legend(fontsize=15,markerscale=1.5)
+ax2.legend(fontsize=25,markerscale=1.5)
+ax1.legend(fontsize=25,markerscale=1.5)
 ax2.set_ylabel(r'$log_{10}(V_{\nu}$)',fontsize=30)
 ax2.set_xlabel(r'$log_{10}(Flux) (Jy)$',fontsize=30)
 ax1.tick_params(labelsize=20)
@@ -239,9 +257,11 @@ plt.savefig('EtavsVscatterinoutBest')
 
 figure,ax = myplt.OutInPlot(np.array([outliersBest.distsEta, outliersBest.distsV]).T,np.array([inliersBest.distsEta,inliersBest.distsV]).T,'OutIn_UnstableBest')
 EtaVsVout, axveta = myplt.OutInPlot(np.array([outliersBest.logEta, outliersBest.logV]).T,np.array([inliersBest.logEta,inliersBest.logV]).T,'OutInEtavsVBest')
+axveta.axvline(x=sigcutx, linewidth=2, color='k', linestyle='--')
+axveta.axhline(y=sigcuty, linewidth=2, color='k', linestyle='--')
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
-axveta.tick_params(axis='both', which='major', labelsize=20)
+axveta.tick_params(axis='both', which='major', labelsize=25)
 plt.savefig('OutInEtavsVBest')
 
 # Outputting variable candidates
