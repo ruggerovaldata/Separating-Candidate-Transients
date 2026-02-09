@@ -46,7 +46,7 @@ def SigmaFit(data):
     return param1, param2
 
 
-p = 0.99 #Inserting here the percentage with which the source should be classified as inlier
+p = 0.95 #Inserting here the percentage with which the source should be classified as inlier
 
 database = 'antoniar' 
 dataset_ids = [6]
@@ -168,6 +168,8 @@ inliers = data.loc[ (data['probability'] <= p*100.) | ( (data['distsEta'] < 0) |
 outliers = data.loc[ (data['probability'] > p*100.) & (data['distsEta'] > 0) & (data['distsV'] > 0)]
 
 
+    
+
 # Plotting
 fig,(ax1,ax2) = plt.subplots(2,1,figsize=(14,14))
 
@@ -175,6 +177,7 @@ ax1.scatter(outliers.logFlux,outliers.logEta,color='red',label='Outliers')
 ax1.scatter(inliers.logFlux,inliers.logEta,color='blue',label='Inliers')
 ax2.scatter(outliers.logFlux,outliers.logV,color='red',label='Outliers')
 ax2.scatter(inliers.logFlux,inliers.logV,color='blue',label = 'Inliers')
+
 
 ax1.set_ylabel(r'$log_{10}(\eta_{\nu}$)',fontsize=30)
 ax2.legend(fontsize=25,markerscale=1.5)
@@ -194,6 +197,7 @@ axveta.axhline(y=sigcuty, linewidth=2, color='k', linestyle='--')
 
 axveta.set_xlabel(r'$log_{10}(\eta_{\nu})$',fontsize=30)
 axveta.set_ylabel(r'$log_{10}(V_{\nu})$',fontsize=30)
+plt.legend()
 axveta.tick_params(axis='both', which='major', labelsize=25)
 plt.savefig('OutInEtavsV')
 
