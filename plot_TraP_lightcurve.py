@@ -10,15 +10,10 @@ import pandas as pd
 from sqlalchemy import *
 from sqlalchemy.orm import relationship
 import tkp.db
-#import logging
-#logging.basicConfig(level=logging.INFO)
-#query_loglevel = logging.WARNING  # Set to INFO to see queries, otherwise WARNING
 import sys
 sys.path.append('../')
 from dblogin import * # This file contains all the variables required to connect to the database
-from databaseTools import dbtools
-from tools import tools
-from plotting import plot_varib_params as pltvp
+import dbtools
 import matplotlib
 import matplotlib.pyplot as plt
 import pylab
@@ -37,14 +32,14 @@ from tkp.db.model import Image
 # The input database, dataset and thresholds
 if len(sys.argv) == 1:
     sourceID=915
-    database = 'antoniar'
+    database = 'dbname'
 elif len(sys.argv) ==3:
     database=sys.argv[1]
     sourceID=sys.argv[2]
 else:
     print('Define variables in script or on command line')
 
-outname = '/home/rvaldata/Lightcurves_MA/new/'+ str(sourceID)+'_lightcurve.png' # name of the plotdata datafile
+outname = str(sourceID)+'_lightcurve.png' # name of the plotdata datafile
 
 
 def parse_txt(txt):
