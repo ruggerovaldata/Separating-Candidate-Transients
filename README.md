@@ -13,3 +13,17 @@ Running the FindingCandidateTransient.py. Python version: 3.9. Dependecies: matp
 Inserting the .csv file names with the parameters that want to be analysed, without including the .csv extension. 
 
 Indicating the p value that want to be used, i.e. the percentage of certainty with which a sources will be classified as an inlier. For example: if p=0.99 the sources that will be classified as inlier are 99% certain of being inlier. 
+
+
+# Finding Flaring Candidates
+
+Step 1:
+
+As above.
+
+Step 2:
+
+Running FindFlaringTransients.py. Input the dataset id and the parameters required for the moving average method.
+
+
+
